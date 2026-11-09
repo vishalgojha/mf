@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { mfapiGet } from "../../utils/mfapi";
 import { showToast } from "../../utils";
-
-const MFAPI_URL = import.meta.env.VITE_MFAPI_URL;
 
 const initialState = {
   inputedText: "",
@@ -19,14 +17,8 @@ export let controller;
 export const fetchMFSearchResults = createAsyncThunk("search/fetchMFSearchResults", async (formattedText) => {
   controller = new AbortController();
 
-  const options = {
-    method: 'GET',
-    url: MFAPI_URL+`search?q=${formattedText}`,
-    signal: controller.signal
-  };
-
-  const res = await axios.request(options);
-  return { text: formattedText, results: res.data };
+  const results = await mfapiGet(`search?q=${formattedText}`, { signal: controller.signal });
+  return { text: formattedText, results };
 });
 
 const searchSlice = createSlice({

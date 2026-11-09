@@ -3,6 +3,8 @@ import themeReducer, { setTheme, } from './features/theme/themeSlice';
 import searchReducer from './features/search/searchSlice';
 import selectedReducer, { fetchMFData } from './features/selected/selectedSlice';
 import drawerReducer from './features/drawer/drawerSlice';
+import niftyReducer from './features/nifty/niftySlice';
+import compareReducer from './features/compare/compareSlice';
 
 const localStorageMiddleware = (store) => (next) => (action) => {
   const result = next(action);
@@ -34,7 +36,9 @@ const store = configureStore({
     theme: themeReducer,
     search: searchReducer,
     selected: selectedReducer,
-    drawer: drawerReducer
+    drawer: drawerReducer,
+    nifty: niftyReducer,
+    compare: compareReducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(localStorageMiddleware),
 });

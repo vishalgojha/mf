@@ -392,9 +392,17 @@ const Chart = () => {
   }, [fundData]);
 
   useEffect(() => {
+    if (!chartParentRef.current) return undefined;
     resizeObserver.observe(chartParentRef.current);
-    drawChart(width, height, fundData);
     return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Wait for the container to be measured; drawing at width 0 makes the
+    // d3 slider compute negative track widths.
+    if (width > 0 && height > 0) {
+      drawChart(width, height, fundData);
+    }
   }, [width, height, fundData,]);
 
   return (

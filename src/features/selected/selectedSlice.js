@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { enqueueSnackbar } from 'notistack';
-import axios from 'axios';
+import { mfapiGet } from '../../utils/mfapi';
 
 const initialState = {
   schemeName: "",
@@ -20,14 +20,7 @@ const clearToast = () => {
 };
 
 export const fetchMFData = createAsyncThunk("selected/fetchMFData", async (fund) => {
-
-  const options = {
-    method: 'GET',
-    url: `https://api.mfapi.in/mf/${fund.schemeCode}`,
-  };
-
-  const res = await axios.request(options);
-  return res.data;
+  return await mfapiGet(String(fund.schemeCode));
 });
 
 const selectedSlice = createSlice({
