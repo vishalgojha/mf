@@ -17,7 +17,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { getNiftyRows, getNiftyStatus, getNiftyMeta, fetchNiftyData } from "../features/nifty/niftySlice";
-import { fetchAllFunds, getFundItems } from "../features/compare/compareSlice";
+import { fetchFundSnapshot, getFundItems, getFundsStatus, getFundsMeta } from "../features/compare/compareSlice";
 import { FUND_UNIVERSE, getCategoryColor } from "../data/funds";
 import { computeFundReturn, formatDay, formatLevel, resolveNiftyWindow } from "../utils/nifty";
 import NiftyContextChart from "./NiftyContextChart";
@@ -52,6 +52,8 @@ const NiftyRange = () => {
   const niftyStatus = useSelector(getNiftyStatus);
   const niftyMeta = useSelector(getNiftyMeta);
   const fundItems = useSelector(getFundItems);
+  const fundsStatus = useSelector(getFundsStatus);
+  const fundsMeta = useSelector(getFundsMeta);
 
   const [fromInput, setFromInput] = useState(DEFAULT_FROM);
   const [toInput, setToInput] = useState(DEFAULT_TO);
@@ -60,11 +62,9 @@ const NiftyRange = () => {
     if (niftyStatus === "idle") dispatch(fetchNiftyData());
   }, [dispatch, niftyStatus]);
 
-  const loadedItems = Object.keys(fundItems).length;
-
   useEffect(() => {
-    if (loadedItems === 0) dispatch(fetchAllFunds());
-  }, [dispatch, loadedItems]);
+    if (fundsStatus === "idle") dispatch(fetchFundSnapshot());
+  }, [dispatch, fundsStatus]);
 
   const windowInfo = useMemo(
     () => resolveNiftyWindow(niftyRows, fromInput, toInput),
@@ -77,7 +77,7 @@ const NiftyRange = () => {
     return FUND_UNIVERSE.map((fund) => {
       const item = fundItems[fund.code];
       if (!item || item.status !== "succeeded") {
-        return { ...fund, status: item?.status || "loading" };
+        return { ...fund, status: item?.status || "missing" };
       }
 
       const result = computeFundReturn(item.navs, windowInfo.startTime, windowInfo.endTime);
@@ -93,13 +93,20 @@ const NiftyRange = () => {
 
   const loadedCount = FUND_UNIVERSE.filter((fund) => fundItems[fund.code]?.status === "succeeded").length;
   const failedCount = FUND_UNIVERSE.filter((fund) => fundItems[fund.code]?.status === "failed").length;
+  const missingCount = performance.filter((fund) => fund.status === "missing").length;
+  const nodataCount = performance.filter((fund) => fund.status === "nodata").length;
+  const unavailableCount = failedCount + missingCount + nodataCount;
 
   const ranked = performance
     .filter((fund) => fund.status === "succeeded" && Number.isFinite(fund.ret))
     .sort((a, b) => b.ret - a.ret);
 
   const best = ranked[0];
-  const allLoaded = loadedCount + failedCount === FUND_UNIVERSE.length;
+  const staleCount = ranked.filter(
+    (fund) => Math.max(fund.staleDays || 0, fund.startStaleDays || 0) > 3
+  ).length;
+  const allLoaded = fundsStatus === "succeeded";
+  const snapshotDate = fundsMeta?.fetchedAt ? String(fundsMeta.fetchedAt).slice(0, 10) : null;
   const lastUpdated = niftyMeta?.fetchedAt ? String(niftyMeta.fetchedAt).slice(0, 10) : null;
 
   const resetLevels = () => {
@@ -186,6 +193,13 @@ const NiftyRange = () => {
         </Alert>
       )}
 
+      {fundsStatus === "failed" && (
+        <Alert severity="error" sx={{ mb: "10px" }}>
+          Could not load the bundled fund NAV snapshot. Run <code>npm run update:funds</code> and
+          redeploy.
+        </Alert>
+      )}
+
       {niftyStatus === "succeeded" && windowInfo.status !== "ready" && windowInfo.status !== "loading" && (
         <Alert severity="warning">{windowInfo.message}</Alert>
       )}
@@ -221,6 +235,11 @@ const NiftyRange = () => {
                 <Typography variant="body2" sx={{ fontSize: 11, color: "text.secondary" }}>
                   Direct plans · NAV growth
                 </Typography>
+                {unavailableCount > 0 && fundsStatus === "succeeded" && (
+                  <Typography variant="body2" sx={{ fontSize: 10, color: "warning.main", mt: "2px" }}>
+                    {unavailableCount} unavailable
+                  </Typography>
+                )}
               </SummaryCard>
             </Grid>
             <Grid item xs={6} md={3}>
@@ -266,7 +285,7 @@ const NiftyRange = () => {
                       sx={{ height: 4, borderRadius: 2 }}
                     />
                     <Typography variant="body2" sx={{ fontSize: 10.5, color: "text.secondary", mt: "4px" }}>
-                      Loading fund NAV histories… {loadedCount}/{FUND_UNIVERSE.length}
+                      Loading bundled NAV data… {loadedCount}/{FUND_UNIVERSE.length}
                     </Typography>
                   </Box>
                 )}
@@ -279,9 +298,10 @@ const NiftyRange = () => {
                   />
                 </Box>
 
-                {failedCount > 0 && (
+                {unavailableCount > 0 && fundsStatus === "succeeded" && (
                   <Typography variant="body2" sx={{ fontSize: 10.5, color: "text.secondary", mt: 1 }}>
-                    {failedCount} fund{failedCount > 1 ? "s" : ""} could not be loaded from MFAPI.in.
+                    {unavailableCount} fund{unavailableCount > 1 ? "s" : ""} excluded from the
+                    ranking (no NAV at the window start or no snapshot data).
                   </Typography>
                 )}
               </Box>
@@ -337,12 +357,22 @@ const NiftyRange = () => {
                           <Typography variant="body2" sx={{ fontSize: 9.5, color: "text.secondary" }}>
                             {formatDay(fund.startTime)}
                           </Typography>
+                          {(fund.startStaleDays || 0) > 3 && (
+                            <Typography variant="body2" sx={{ fontSize: 9, color: "warning.main" }}>
+                              stale {fund.startStaleDays}d
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 11 }}>
                           {fund.endNav.toFixed(2)}
                           <Typography variant="body2" sx={{ fontSize: 9.5, color: "text.secondary" }}>
                             {formatDay(fund.endTime)}
                           </Typography>
+                          {(fund.staleDays || 0) > 3 && (
+                            <Typography variant="body2" sx={{ fontSize: 9, color: "warning.main" }}>
+                              stale {fund.staleDays}d
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 11.5, fontWeight: 600, color: positive ? UP_COLOR : DOWN_COLOR }}>
                           {signed(fund.ret)}
@@ -366,9 +396,17 @@ const NiftyRange = () => {
               </Table>
             </TableContainer>
             <Typography variant="body2" sx={{ fontSize: 10, color: "text.secondary", opacity: 0.8, mt: "8px" }}>
-              Fund NAVs: MFAPI.in (free API). Nifty 50 closes: {niftyMeta?.source || "NSE daily archive"}
+              Fund NAVs: {fundsMeta?.source || "MFAPI.in"} snapshot
+              {snapshotDate ? ` (${snapshotDate})` : ""}. Nifty 50 closes:{" "}
+              {niftyMeta?.source || "NSE daily archive"}
               {lastUpdated ? `, last updated ${lastUpdated}` : ""}. Returns use the closest available
               NAV on or before each boundary date.
+              {unavailableCount > 0 && fundsStatus === "succeeded"
+                ? ` ${unavailableCount} fund${unavailableCount > 1 ? "s" : ""} excluded: no NAV at the window start or no snapshot data.`
+                : ""}
+              {staleCount > 0
+                ? ` ${staleCount} fund${staleCount > 1 ? "s" : ""} use a NAV more than 3 days away from a boundary.`
+                : ""}
             </Typography>
           </Box>
         </>

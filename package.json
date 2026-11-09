@@ -1,5 +1,5 @@
 {
-  "name": "india-mutual-fund",
+  "name": "levellens",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "update:nifty": "node scripts/update-nifty.mjs"
+    "update:nifty": "node scripts/update-nifty.mjs",
+    "update:funds": "node scripts/update-funds.mjs",
+    "check:returns": "node scripts/check-returns.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

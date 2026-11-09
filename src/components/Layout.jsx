@@ -19,22 +19,19 @@ const Layout = () => {
         <Box sx={{ mt: "70px" }}>
           <Outlet />
           <Box sx={{ width: "100%", px: "15px", mt: "20px", alignItems: "center" }}>
-            <Link href="https://github.com/anshuthopsee/india-mutual-fund" target="_blank" rel="noopener" sx={{ display: "flex", alignItems: "center", my: "10px", width: "fit-content" }}>
-              <Typography variant='h4' sx={{ fontFamily: "Exo" }}>India Mutual Fund</Typography>
+            <Link href="https://github.com/vishalgojha/mf" target="_blank" rel="noopener" sx={{ display: "flex", alignItems: "center", my: "10px", width: "fit-content" }}>
+              <Typography variant='h4' sx={{ fontFamily: "Exo" }}>LevelLens</Typography>
               <GitHubIcon sx={{ ml: "10px", fontSize: "30px", verticalAlign: "middle" }} />
             </Link>
             <Typography variant='body2' sx={{ color: "text.secondary", textAlign: "justify", pb: "20px" }}>
-              A simple web app to view the historical NAV of Indian Mutual Funds. 
-              You can search for a mutual fund by the name of the fund house or the type 
-              of fund (equity/debt) and view the historical NAV for the fund of your 
-              choice in a chart and also see the percentage change in the NAV 
-              over time. A date range selector is available to select and zoom in on a 
-              specific time period. The data is downsampled and so the closest available 
-              dates to the ones chosen with the date range selector will be picked. You can 
-              also download the full scale NAV data (not downsampled) as a CSV file. All the 
-              Mutual Fund data, including the search results, are fetched from the 
-                <Link href="https://www.mfapi.in/" target="_blank" rel="noopener"> MFAPI.in</Link> free API.
-              The App is built with React, D3, and Material UI.
+              A free, open-source way to look at Indian mutual funds. Search any scheme and
+              chart its historical NAV, or open Nifty range performance: pick two Nifty 50
+              levels, and the app finds the most recent time the index travelled between
+              them, then ranks 62 popular Direct-Growth funds over exactly those dates.
+              Compare each fund with the index, see which categories led, and download the
+              NAV data as CSV. Fund NAVs come from the
+                <Link href="https://www.mfapi.in/" target="_blank" rel="noopener"> MFAPI.in</Link> free API;
+              Nifty 50 closes are bundled from NSE data. Built with React, D3, and Material UI.
             </Typography>
           </Box>
         </Box>

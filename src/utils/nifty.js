@@ -125,9 +125,13 @@ export const findNavOnOrBefore = (navs, time) => {
 export const computeFundReturn = (navs, startTime, endTime) => {
   if (!navs || navs.length === 0) return null;
 
-  const start = findNavOnOrBefore(navs, startTime) || navs[0];
-  const end = findNavOnOrBefore(navs, endTime);
+  // A fund that launched after the window opened has no NAV at the start.
+  // Falling back to its first NAV would measure a different (shorter) period
+  // and inflate/deflate the return, so treat it as unavailable instead.
+  const start = findNavOnOrBefore(navs, startTime);
+  if (!start) return null;
 
+  const end = findNavOnOrBefore(navs, endTime);
   if (!end || end[0] <= start[0]) return null;
 
   return {
@@ -137,5 +141,6 @@ export const computeFundReturn = (navs, startTime, endTime) => {
     endNav: end[1],
     ret: (end[1] / start[1] - 1) * 100,
     staleDays: Math.round((endTime - end[0]) / DAY_MS),
+    startStaleDays: Math.round((startTime - start[0]) / DAY_MS),
   };
 };

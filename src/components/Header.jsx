@@ -1,5 +1,4 @@
 import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
@@ -25,7 +24,7 @@ const Header = () => {
           <div style={{ display: "inline-flex", height: "100%", alignItems: "center" }}>
             <QueryStatsIcon sx={{ mr: "5px", fontSize: 20, backgroundColor: "#ff834f", color: "white" }} />
             <Typography component="div" variant="h6" fontWeight="bold" fontFamily="Exo" sx={{ color: "text.secondary" }}>
-              India Mutual Fund
+              LevelLens
             </Typography>
           </div>
           <IconButton aria-label="mode" sx={{ ml: "auto", fontSize: 24, color: "text.secondary" }} onClick={handleThemeChange}>
