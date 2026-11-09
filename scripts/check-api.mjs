@@ -72,6 +72,15 @@ const post = (pathname, body, headers = {}) =>
     body: JSON.stringify(body),
   });
 
+const issueKey = async () => {
+  const response = await post("/api/instinct/keys", {});
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.match(body.key, /^ll_/);
+  assert.equal(body.uses, 1);
+  return body.key;
+};
+
 const results = [];
 const check = async (name, fn) => {
   try {
@@ -113,7 +122,7 @@ try {
     const response = await fetch(`${base}/api/instinct/tools`);
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(body.tools.length, 7);
+    assert.equal(body.tools.length, 8);
     assert.ok(body.tools.every((tool) => tool.parameters.type === "object"));
   });
 
@@ -160,9 +169,10 @@ try {
   });
 
   await check("runs /ask through the mock provider", async () => {
+    const key = await issueKey();
     const response = await post("/api/instinct/ask", {
       question: "How did funds do between 22,600 and 25,000?",
-    });
+    }, { Authorization: `Bearer ${key}` });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.match(body.answer, /Mock answer/);
@@ -176,12 +186,13 @@ try {
   });
 
   await check("can include full tool results from /ask", async () => {
+    const key = await issueKey();
     const response = await post("/api/instinct/ask", {
       question: "Resolve 22,600 to 25,000",
       includeToolResults: true,
       from: 22600,
       to: 25000,
-    });
+    }, { Authorization: `Bearer ${key}` });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.trace[0].result.status, "ready");
@@ -189,7 +200,8 @@ try {
   });
 
   await check("validates the /ask question", async () => {
-    const response = await post("/api/instinct/ask", { question: "" });
+    const key = await issueKey();
+    const response = await post("/api/instinct/ask", { question: "" }, { Authorization: `Bearer ${key}` });
     const body = await response.json();
     assert.equal(response.status, 400);
     assert.equal(body.code, "invalid_question");
@@ -209,6 +221,7 @@ try {
     assert.equal(response.status, 200);
     assert.equal(body.openapi, "3.1.0");
     assert.ok(body.paths["/api/instinct/tools/rank_funds"]);
+    assert.ok(body.paths["/api/instinct/keys"]);
     assert.equal(
       body.paths["/api/instinct/tools/rank_funds"].post.requestBody.content["application/json"]
         .schema.required.includes("to"),

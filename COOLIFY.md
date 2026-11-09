@@ -85,7 +85,11 @@ OPENROUTER_API_KEY=sk-or-v1-...
 INSTINCT_PROVIDERS=nvidia,openrouter
 NVIDIA_MODEL=meta/llama-3.3-70b-instruct
 OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free
-INSTINCT_API_KEY=<long-random-token>       # protect POST /api/instinct/ask
+# /ask requires a free one-time key from the home page by default.
+INSTINCT_REQUIRE_KEY=1
+INSTINCT_ONE_TIME_KEY_TTL_MS=600000
+# Optional permanent server token for trusted clients:
+INSTINCT_API_KEY=<long-random-token>
 INSTINCT_ALLOWED_ORIGINS=*
 INSTINCT_ASK_RATE_LIMIT=10
 INSTINCT_TOOL_RATE_LIMIT=120
@@ -122,7 +126,7 @@ docker run --rm -p 8080:8080 levellens
 # open http://localhost:8080
 ```
 
-To exercise `/ask` without a key, run the checks locally:
+To exercise the API locally, run:
 
 ```bash
 npm run check:tools

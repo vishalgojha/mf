@@ -117,6 +117,20 @@ check("returns one fund's NAV detail", () => {
   assert.ok(detail.lastNav.date <= "2026-11-06");
 });
 
+check("exports bulk fund NAV data by levels and dates", () => {
+  const byLevels = toolkit.fundData({ from: 22600, to: 25000, limit: 62 });
+  assert.equal(byLevels.status, "ready");
+  assert.equal(byLevels.requested, 62);
+  assert.equal(byLevels.funds.length, 62);
+  assert.equal(byLevels.window.startDate, "2026-10-23");
+  assert.ok(byLevels.funds.some((fund) => fund.navs.length > 0));
+
+  const byDates = toolkit.fundData({ fromDate: "2025-11-06", toDate: "2026-11-06", limit: 3 });
+  assert.equal(byDates.status, "ready");
+  assert.equal(byDates.funds.length, 3);
+  assert.ok(byDates.funds.every((fund) => fund.navs.every((nav) => nav.date >= "2025-11-06" && nav.date <= "2026-11-06")));
+});
+
 check("reports market context from the last close", () => {
   const overview = toolkit.marketOverview({ lookbackDays: 365 });
   assert.equal(overview.status, "ready");
@@ -156,14 +170,15 @@ check("coerces numeric strings and summarises list_funds", () => {
   assert.match(listed.summary, /62 funds across 9 categories/);
 });
 
-check("exposes seven tool definitions with schemas", () => {
+check("exposes eight tool definitions with schemas", () => {
   const tools = registry.list();
-  assert.equal(tools.length, 7);
+  assert.equal(tools.length, 8);
   assert.deepEqual(
     tools.map((tool) => tool.name).sort(),
     [
       "analog_windows",
       "category_stats",
+      "fund_data",
       "fund_detail",
       "list_funds",
       "market_overview",

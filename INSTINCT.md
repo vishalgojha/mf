@@ -28,6 +28,7 @@ Base URL: `https://mf.vishalojha.me/api/instinct`
 | `GET` | `/api/instinct/health` | Data coverage, provider status, uptime. |
 | `GET` | `/api/instinct/tools` | Tool catalog with JSON Schemas. |
 | `POST` | `/api/instinct/tools/:name` | Call one deterministic tool. |
+| `POST` | `/api/instinct/keys` | Issue a free one-time key for one `/ask` request. |
 | `GET` | `/api/instinct/models` | Configured providers and models (never keys). |
 | `GET` | `/api/instinct/openapi.json` | OpenAPI 3.1 document for code generation and validation. |
 | `POST` | `/api/instinct/ask` | Run the bounded tool-calling agent. |
@@ -38,6 +39,13 @@ Base URL: `https://mf.vishalojha.me/api/instinct`
 curl -s https://mf.vishalojha.me/api/instinct/health | jq
 
 curl -s https://mf.vishalojha.me/api/instinct/tools | jq '.tools[].name'
+```
+
+The home page can issue a free one-time bearer key. It expires after 10 minutes
+and is consumed by the first `/ask` request:
+
+```bash
+curl -s -X POST https://mf.vishalojha.me/api/instinct/keys | jq
 ```
 
 ### Call a tool
@@ -138,6 +146,7 @@ one final tool-free call and returns `truncated: true` with a note.
 | `category_stats` | `from`, `to` | Per-category average/median return, average alpha, breadth, best/worst. |
 | `analog_windows` | `movePct?`, `tolerancePct?`, `maxDays?`, `direction?`, `category?`, `minObservations?`, `limit?` | Every similar historical move, plus funds ranked by hit rate and median alpha. |
 | `fund_detail` | `code`, `from?`, `to?` | One fund's NAV series and return. Defaults to the last 365 days. |
+| `fund_data` | `from?`, `to?`, `fromDate?`, `toDate?`, `limit?` | Bulk NAV series for up to all 62 covered funds, using either a Nifty level window or explicit dates. |
 | `market_overview` | `lookbackDays?` | Latest Nifty close, 1w/1m/3m/6m/1y returns, range and drawdown. |
 | `list_funds` | none | The 62-fund universe with codes, names and categories. |
 
@@ -190,8 +199,12 @@ to the next provider once, then returns an actionable error.
 
 ## Auth and limits
 
-- Set `INSTINCT_API_KEY` to require `Authorization: Bearer <token>` on `/ask`.
-  Tool endpoints remain public and read-only.
+- `/ask` requires a free one-time `Authorization: Bearer <token>` by default;
+  generate one with `POST /api/instinct/keys` or from the home page. It expires
+  after 10 minutes and is consumed by one request. Set `INSTINCT_API_KEY` to
+  also allow a permanent server token. Set `INSTINCT_REQUIRE_KEY=0` only if you
+  intentionally want an open `/ask` endpoint. Tool endpoints remain public and
+  read-only.
 - In-memory rate limits per client IP:
   - `/ask`: 10 requests/minute (`INSTINCT_ASK_RATE_LIMIT`)
   - tool calls: 120 requests/minute (`INSTINCT_TOOL_RATE_LIMIT`)

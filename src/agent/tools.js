@@ -421,12 +421,72 @@ export const createToolkit = ({
     };
   };
 
+  // Bulk NAV export for agent clients. A level window and an explicit date
+  // window use the same shape, so Instinct can request either market-relative
+  // or calendar-relative data without doing client-side arithmetic.
+  const fundData = ({ from = null, to = null, fromDate = null, toDate = null, limit = 62 } = {}) => {
+    let startTime;
+    let endTime;
+    let window = null;
+
+    if (from !== null || to !== null) {
+      if (from === null || to === null) {
+        return { status: "invalid", message: "Both from and to Nifty levels are required." };
+      }
+      const resolved = resolveNiftyWindow(niftyRows, from, to);
+      if (resolved.status !== "ready") return { status: resolved.status, message: resolved.message, funds: [] };
+      startTime = resolved.startTime;
+      endTime = resolved.endTime;
+      window = publicWindow(resolved);
+    } else {
+      if (!fromDate || !toDate) {
+        return { status: "invalid", message: "Provide either from/to Nifty levels or fromDate/toDate." };
+      }
+      startTime = isoToTime(fromDate);
+      endTime = isoToTime(toDate);
+      if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || startTime >= endTime) {
+        return { status: "invalid", message: "fromDate and toDate must be valid, increasing YYYY-MM-DD dates." };
+      }
+    }
+
+    const selected = universe.slice(0, limit);
+    const returned = selected.map((fund) => {
+      const { navs, schemeName } = getFund(fund.code);
+      const series = navs.filter(([time]) => time >= startTime && time <= endTime);
+      const start = findNavOnOrBefore(navs, startTime);
+      const end = findNavOnOrBefore(navs, endTime);
+      return {
+        code: fund.code,
+        name: fund.name,
+        category: fund.category,
+        schemeName,
+        status: series.length ? "ready" : "missing",
+        startDate: start ? timeToIso(start[0]) : null,
+        endDate: end ? timeToIso(end[0]) : null,
+        startNav: start?.[1] ?? null,
+        endNav: end?.[1] ?? null,
+        returnPct: start && end && end[0] > start[0] ? round((end[1] / start[1] - 1) * 100) : null,
+        navs: series.map(([time, nav]) => ({ date: timeToIso(time), nav })),
+      };
+    });
+
+    return {
+      status: "ready",
+      window,
+      dates: { from: timeToIso(startTime), to: timeToIso(endTime) },
+      requested: selected.length,
+      available: returned.filter((fund) => fund.status === "ready").length,
+      funds: returned,
+    };
+  };
+
   return {
     resolveWindow,
     rankFunds,
     categoryStats,
     analogWindows,
     fundDetail,
+    fundData,
     marketOverview,
     dataStatus,
     listFunds: () =>

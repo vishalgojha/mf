@@ -26,6 +26,8 @@ const STATIC_DIR = process.env.INSTINCT_STATIC_DIR
   ? path.resolve(process.env.INSTINCT_STATIC_DIR)
   : path.join(repoRoot, "dist");
 const API_KEY = process.env.INSTINCT_API_KEY || "";
+const REQUIRE_ONE_TIME_KEY = process.env.INSTINCT_REQUIRE_KEY !== "0";
+const ONE_TIME_KEY_TTL_MS = Number(process.env.INSTINCT_ONE_TIME_KEY_TTL_MS || 10 * 60 * 1000);
 const TRUST_PROXY = process.env.INSTINCT_TRUST_PROXY !== "0";
 const CORS_ORIGINS = (process.env.INSTINCT_ALLOWED_ORIGINS || "*")
   .split(",")
@@ -78,6 +80,15 @@ const openApiDocument = {
       get: {
         summary: "List tools with JSON Schemas.",
         responses: { 200: { description: "Tool catalog." } },
+      },
+    },
+    "/api/instinct/keys": {
+      post: {
+        summary: "Issue one short-lived API key for one hosted-agent request.",
+        responses: {
+          200: { description: "One-time bearer key. The key is returned only once." },
+          429: errorResponse("Key issuance rate limit exceeded."),
+        },
       },
     },
     "/api/instinct/models": {
@@ -199,6 +210,27 @@ const clientIp = (req) => {
 };
 
 const buckets = new Map();
+const oneTimeKeys = new Map();
+
+const hashKey = (value) => crypto.createHash("sha256").update(value).digest("hex");
+
+const issueOneTimeKey = () => {
+  const key = `ll_${crypto.randomBytes(24).toString("base64url")}`;
+  const expiresAt = Date.now() + ONE_TIME_KEY_TTL_MS;
+  oneTimeKeys.set(hashKey(key), { expiresAt, used: false });
+  return { key, expiresAt };
+};
+
+const consumeOneTimeKey = (value) => {
+  if (!value) return false;
+  const record = oneTimeKeys.get(hashKey(value));
+  if (!record || record.used || record.expiresAt <= Date.now()) {
+    if (record?.expiresAt <= Date.now()) oneTimeKeys.delete(hashKey(value));
+    return false;
+  }
+  record.used = true;
+  return true;
+};
 
 const rateLimit = (key, limit, windowMs = 60000) => {
   const now = Date.now();
@@ -222,6 +254,9 @@ const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, bucket] of buckets) {
     if (now >= bucket.resetAt) buckets.delete(key);
+  }
+  for (const [key, record] of oneTimeKeys) {
+    if (record.expiresAt <= now || record.used) oneTimeKeys.delete(key);
   }
 }, 5 * 60 * 1000);
 cleanupTimer.unref();
@@ -276,11 +311,12 @@ const safeEqual = (left, right) => {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
-const isAuthorized = (req) => {
-  if (!API_KEY) return true;
+const authorizeAsk = (req) => {
   const header = req.headers.authorization || "";
   const match = /^Bearer\s+(.+)$/i.exec(header);
-  return Boolean(match && safeEqual(match[1], API_KEY));
+  if (!match) return !REQUIRE_ONE_TIME_KEY && !API_KEY ? { ok: true, permanent: false } : { ok: false };
+  if (API_KEY && safeEqual(match[1], API_KEY)) return { ok: true, permanent: true };
+  return { ok: consumeOneTimeKey(match[1]), permanent: false };
 };
 
 const requestIdFor = (req) => {
@@ -314,6 +350,7 @@ const handleApi = async (req, res, pathname, requestId) => {
           models: "GET /api/instinct/models",
           openapi: "GET /api/instinct/openapi.json",
           ask: "POST /api/instinct/ask",
+          issueKey: "POST /api/instinct/keys",
         },
         data: data.status,
       },
@@ -349,6 +386,27 @@ const handleApi = async (req, res, pathname, requestId) => {
   if (pathname === "/api/instinct/models") {
     if (req.method !== "GET") throw new HttpError(405, "Method not allowed.", "method_not_allowed");
     jsonResponse(res, 200, getProviderInfo(), requestId);
+    return true;
+  }
+
+  if (pathname === "/api/instinct/keys") {
+    if (req.method !== "POST") throw new HttpError(405, "Method not allowed.", "method_not_allowed");
+    const rate = rateLimit(`${clientIp(req)}:keys`, ASK_LIMIT);
+    applyRateHeaders(res, rate);
+    if (!rate.allowed) throw new HttpError(429, "Key issuance rate limit exceeded.", "rate_limited");
+    const issued = issueOneTimeKey();
+    jsonResponse(
+      res,
+      200,
+      {
+        key: issued.key,
+        tokenType: "Bearer",
+        uses: 1,
+        expiresAt: new Date(issued.expiresAt).toISOString(),
+        message: "This key is shown once and expires after one /ask request or 10 minutes.",
+      },
+      requestId
+    );
     return true;
   }
 
@@ -394,9 +452,10 @@ const handleApi = async (req, res, pathname, requestId) => {
 
   if (pathname === "/api/instinct/ask") {
     if (req.method !== "POST") throw new HttpError(405, "Method not allowed.", "method_not_allowed");
-    if (!isAuthorized(req)) {
+    const authorization = authorizeAsk(req);
+    if (!authorization.ok) {
       res.setHeader("WWW-Authenticate", "Bearer");
-      throw new HttpError(401, "Missing or invalid bearer token.", "unauthorized");
+      throw new HttpError(401, "Missing, expired, or already-used bearer token.", "unauthorized");
     }
 
     const rate = rateLimit(`${clientIp(req)}:ask`, ASK_LIMIT);

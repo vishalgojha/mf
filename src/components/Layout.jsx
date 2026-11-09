@@ -1,6 +1,9 @@
 import { Outlet } from 'react-router-dom';
-import { ThemeProvider, Container, CssBaseline, Box, Typography, Link } from '@mui/material';
+import { useState } from 'react';
+import { ThemeProvider, Container, CssBaseline, Box, Typography, Link, Button, Paper, Stack } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import KeyIcon from '@mui/icons-material/Key';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useSelector } from 'react-redux';
 import { SnackbarProvider } from 'notistack';
 import { getTheme } from '../features/theme/themeSlice';
@@ -9,6 +12,28 @@ import Header from './Header';
 
 const Layout = () => {
   const theme = useSelector(getTheme);
+  const [oneTimeKey, setOneTimeKey] = useState(null);
+  const [keyLoading, setKeyLoading] = useState(false);
+  const [keyError, setKeyError] = useState('');
+
+  const getOneTimeKey = async () => {
+    setKeyLoading(true);
+    setKeyError('');
+    try {
+      const response = await fetch('/api/instinct/keys', { method: 'POST' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || 'Could not issue a key.');
+      setOneTimeKey(body);
+    } catch (error) {
+      setKeyError(error.message);
+    } finally {
+      setKeyLoading(false);
+    }
+  };
+
+  const copyKey = async () => {
+    if (oneTimeKey?.key) await navigator.clipboard.writeText(oneTimeKey.key);
+  };
 
   return (
     <ThemeProvider theme={theme === "light" ? lightTheme : darkTheme}>
@@ -33,6 +58,33 @@ const Layout = () => {
                 <Link href="https://www.mfapi.in/" target="_blank" rel="noopener"> MFAPI.in</Link> free API;
               Nifty 50 closes are bundled from NSE data. Built with React, D3, and Material UI.
             </Typography>
+            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1" fontWeight="bold">Try the Instinct API</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Get a free bearer key for one hosted-agent request. It expires after 10 minutes and is never stored in your browser.
+                </Typography>
+                <Box>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<KeyIcon />}
+                    onClick={getOneTimeKey}
+                    disabled={keyLoading}
+                  >
+                    {keyLoading ? 'Creating key…' : 'Create one-time key'}
+                  </Button>
+                </Box>
+                {oneTimeKey && (
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Typography component="code" sx={{ wordBreak: 'break-all' }}>{oneTimeKey.key}</Typography>
+                    <Button size="small" startIcon={<ContentCopyIcon />} onClick={copyKey}>Copy</Button>
+                    <Typography variant="caption" color="text.secondary">Use as <code>Authorization: Bearer {oneTimeKey.key}</code> on <code>/api/instinct/ask</code>.</Typography>
+                  </Box>
+                )}
+                {keyError && <Typography variant="body2" color="error">{keyError}</Typography>}
+              </Stack>
+            </Paper>
           </Box>
         </Box>
       </Container>

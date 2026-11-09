@@ -144,6 +144,28 @@ const TOOL_DEFINITIONS = [
     run: (toolkit, args) => toolkit.analogWindows(args),
   },
   {
+    name: "fund_data",
+    description:
+      "Return NAV data for many covered funds over either a Nifty level window or explicit dates. Use from/to for the latest market-relative window, or fromDate/toDate for calendar dates. This is the bulk data export tool.",
+    parameters: {
+      type: "object",
+      properties: {
+        from: { type: "number", exclusiveMinimum: 0, description: "Lower Nifty 50 level." },
+        to: { type: "number", exclusiveMinimum: 0, description: "Upper Nifty 50 level." },
+        fromDate: dateString,
+        toDate: dateString,
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 62,
+          description: "Number of funds to include. Defaults to all covered funds (62).",
+        },
+      },
+      additionalProperties: false,
+    },
+    run: (toolkit, args) => toolkit.fundData(args),
+  },
+  {
     name: "fund_detail",
     description:
       "Get one fund's NAV series and return for a date range. Use after ranking to explain a specific fund. Defaults to the last 365 days.",
@@ -345,6 +367,8 @@ const summarize = (name, result) => {
         `${result.name}: ${result.firstNav?.date} → ${result.lastNav?.date}, ` +
         `${result.returnPct}% (${result.navs.length} NAVs).`
       );
+    case "fund_data":
+      return `${result.available}/${result.requested} funds returned NAV data for ${result.dates.from} → ${result.dates.to}.`;
     case "market_overview":
       return (
         `Nifty ${result.close} on ${result.asOf} (day ${result.dayChangePct}%). ` +
