@@ -3,7 +3,7 @@
 This app is a static React SPA, so it ships as a small **nginx container**. There is
 no database, no persistent volume, and no server-side Node.js at runtime.
 
-> **Current target:** repo `vishalgojha/sdagent`, branch `main`, domain
+> **Current target:** repo `vishalgojha/mf`, branch `main`, domain
 > `https://mf.vishalojha.me`.
 
 The repo includes:
@@ -17,7 +17,7 @@ The repo includes:
 ## 1. Put the code on a Git repo Coolify can reach
 
 Coolify deploys from Git. This repo is already pushed to
-`git@github.com:vishalgojha/sdagent.git` on `main`.
+`git@github.com:vishalgojha/mf.git` on `main`.
 
 ```bash
 git add -A
@@ -28,7 +28,7 @@ git push origin main
 ## 2. Create the application in Coolify
 
 1. Open Coolify → your **Project** → **+ New Resource** → **Application**.
-2. **Repository:** `vishalgojha/sdagent`, **Branch:** `main`.
+2. **Repository:** `vishalgojha/mf`, **Branch:** `main`.
 3. **Build Pack:** `Dockerfile`
 4. **Base Directory:** `/`
 5. **Dockerfile Location:** `/Dockerfile`

@@ -50,7 +50,7 @@ The PDF is rendered with headless Chrome and written to `reports/nifty-fund-perf
 ## Deploying
 The app is a static SPA with no backend. It includes a multi-stage `Dockerfile` and an `nginx.conf` (SPA fallback, gzip, asset caching, `/healthz`), so it runs on any Docker host.
 
-For Hetzner with Coolify, follow [COOLIFY.md](COOLIFY.md). The app is deployed from `vishalgojha/sdagent` (`main`) at `https://mf.vishalojha.me`.
+For Hetzner with Coolify, follow [COOLIFY.md](COOLIFY.md). The app is deployed from `vishalgojha/mf` (`main`) at `https://mf.vishalojha.me`.
 
 Quick local container test:
 
