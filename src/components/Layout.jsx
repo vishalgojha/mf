@@ -52,7 +52,7 @@ const Layout = () => {
               A free, open-source way to look at Indian mutual funds. Search any scheme and
               chart its historical NAV, or open Nifty range performance: pick two Nifty 50
               levels, and the app finds the most recent time the index travelled between
-              them, then ranks 62 popular Direct-Growth funds over exactly those dates.
+              them, then ranks the covered Direct-Growth funds over exactly those dates.
               Compare each fund with the index, see which categories led, and download the
               NAV data as CSV. Fund NAVs come from the
                 <Link href="https://www.mfapi.in/" target="_blank" rel="noopener"> MFAPI.in</Link> free API;

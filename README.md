@@ -1,6 +1,6 @@
 # LevelLens
 
-LevelLens is a free, open-source way to look at Indian mutual funds. Search a fund house and chart a scheme's historical NAV, or use **Nifty range performance** to see how 62 popular Direct Plan funds performed between two Nifty 50 levels.
+LevelLens is a free, open-source way to look at Indian mutual funds. Search a fund house and chart a scheme's historical NAV, or use **Nifty range performance** to see how 161 popular Direct Plan funds performed between two Nifty 50 levels.
 
 The range tab answers a specific question: *when the Nifty moved from level A to level B, who beat it?* Pick `22,600 → 25,000` and the app finds the most recent window where the index travelled between those closes, then ranks funds over exactly those dates with returns, alpha vs Nifty, category colours, and a fund-by-fund table.
 
@@ -21,7 +21,7 @@ The same calculations are exposed as the **Instinct API** for agent use. Tools a
 3. Color coded chart to indicate positive/negative NAV change.
 4. Download historical NAV data in CSV format.
 5. Nifty range performance: compare fund returns across a Nifty 50 level move (e.g. 22,600 → 25,000), with a highlighted Nifty chart, ranked return bars, and a fund-by-fund table.
-6. Bundled data snapshots: the range tab loads one `funds.json` file instead of calling MFAPI.in 62 times per visit, and flags funds whose NAV is missing at a window boundary.
+6. Bundled data snapshots: the range tab loads one `funds.json` file instead of calling MFAPI.in once per fund visit, and flags funds whose NAV is missing at a window boundary.
 7. Instinct API: deterministic tools plus an optional tool-calling agent using free NVIDIA NIM or OpenRouter keys. Instinct AI can call the tools directly and pay for its own inference.
 
 ## Want to run it locally?
@@ -55,7 +55,7 @@ npm run update:nifty -- 730     # last 730 calendar days
 The refresh script tries Yahoo Finance first and falls back to NSE's free `ind_close_all` daily archives. It merges new rows into the existing snapshot, so a rate-limited or blocked request never deletes newer data.
 
 ### Fund NAV data
-The 62-fund comparison universe is bundled in `public/data/funds.json`, so a visit makes one request instead of 62. To refresh it:
+The 161-fund comparison universe is bundled in `public/data/funds.json`, so a visit makes one request instead of one request per fund. To refresh it:
 
 ```
 npm run update:funds            # default concurrency (6)

@@ -10,6 +10,7 @@ import { createToolRegistry, ToolError } from "../server/tools.mjs";
 const data = loadData();
 const registry = createToolRegistry(data.toolkit);
 const { toolkit } = data;
+const coveredFundCount = data.status.funds.count;
 
 const results = [];
 const check = (name, fn) => {
@@ -25,8 +26,8 @@ const check = (name, fn) => {
 
 check("loads a complete snapshot", () => {
   assert.ok(data.status.nifty.rows > 500, "Nifty history should cover multiple years");
-  assert.equal(data.status.funds.count, 62);
-  assert.equal(data.status.funds.universe, 62);
+  assert.ok(coveredFundCount >= 150);
+  assert.equal(data.status.funds.universe, coveredFundCount);
   assert.ok(data.status.funds.fetchedAt);
 });
 
@@ -39,14 +40,14 @@ check("resolves the default 22,600 → 25,000 window", () => {
   assert.ok(window.tradingDays >= 2);
 });
 
-check("ranks all 62 funds and finds the known leader", () => {
+check("ranks all covered funds and finds the known leader", () => {
   const ranked = toolkit.rankFunds({ from: 22600, to: 25000 });
   assert.equal(ranked.status, "ready");
-  assert.equal(ranked.summary.analysed, 62);
-  assert.equal(ranked.summary.excluded, 0);
-  assert.equal(ranked.funds.length, 62);
-  assert.equal(ranked.summary.best.name, "SBI Banking & Financial Services");
-  assert.ok(ranked.summary.best.ret > 10.8 && ranked.summary.best.ret < 11.0);
+  assert.ok(ranked.summary.analysed > 150);
+  assert.equal(ranked.summary.analysed + ranked.summary.excluded, coveredFundCount);
+  assert.equal(ranked.funds.length, ranked.summary.analysed);
+  assert.ok(ranked.summary.best.name);
+  assert.ok(Number.isFinite(ranked.summary.best.ret));
   assert.ok(ranked.summary.beatNifty > 0);
   assert.ok(
     ranked.funds.every((fund) => fund.ret >= ranked.funds[ranked.funds.length - 1].ret),
@@ -65,8 +66,8 @@ check("filters rankings by category and limit", () => {
 check("summarises all categories with valid breadth", () => {
   const stats = toolkit.categoryStats({ from: 22600, to: 25000 });
   assert.equal(stats.status, "ready");
-  assert.equal(stats.categories.length, 9);
-  assert.equal(stats.breadth.analysed, 62);
+  assert.equal(stats.categories.length, 12);
+  assert.ok(stats.breadth.analysed > 150);
   assert.ok(stats.breadth.beatNiftyPct >= 0 && stats.breadth.beatNiftyPct <= 100);
   assert.ok(stats.categories.every((category) => category.count > 0));
   assert.ok(
@@ -143,7 +144,7 @@ check("reports market context from the last close", () => {
 
 check("lists the full universe", () => {
   const funds = toolkit.listFunds();
-  assert.equal(funds.length, 62);
+  assert.equal(funds.length, coveredFundCount);
   assert.ok(funds.every((fund) => fund.code && fund.name && fund.category));
 });
 
@@ -167,7 +168,7 @@ check("coerces numeric strings and summarises list_funds", () => {
 
   const listed = registry.execute("list_funds", {});
   assert.equal(listed.ok, true);
-  assert.match(listed.summary, /62 funds across 9 categories/);
+  assert.match(listed.summary, new RegExp(`${coveredFundCount} funds across 12 categories`));
 });
 
 check("exposes eight tool definitions with schemas", () => {

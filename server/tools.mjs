@@ -4,7 +4,7 @@
 // them. Handlers are thin wrappers around src/agent/tools.js, which means the
 // HTTP API, the browser, and the tests all compute numbers the same way.
 
-import { CATEGORY_COLORS } from "../src/data/funds.js";
+import { CATEGORY_COLORS, FUND_UNIVERSE } from "../src/data/funds.js";
 
 export const CATEGORIES = Object.keys(CATEGORY_COLORS);
 
@@ -51,7 +51,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "rank_funds",
     description:
-      "Rank the 62 Direct-Growth funds by return over the most recent window between two Nifty levels. Returns return, alpha vs Nifty, dates, category and stale-NAV flags.",
+      "Rank all covered Direct-Growth funds by return over the most recent window between two Nifty levels. Returns return, alpha vs Nifty, dates, category and stale-NAV flags.",
     parameters: {
       type: "object",
       properties: {
@@ -64,8 +64,8 @@ const TOOL_DEFINITIONS = [
         limit: {
           type: "integer",
           minimum: 1,
-          maximum: 62,
-          description: "Return only the top N funds after ranking.",
+          maximum: FUND_UNIVERSE.length,
+          description: "Return only the top N funds after ranking. Defaults to all covered funds.",
         },
       },
       required: ["from", "to"],
@@ -135,7 +135,7 @@ const TOOL_DEFINITIONS = [
         limit: {
           type: "integer",
           minimum: 1,
-          maximum: 62,
+          maximum: FUND_UNIVERSE.length,
           description: "Number of funds to return. Default 20.",
         },
       },
@@ -157,8 +157,8 @@ const TOOL_DEFINITIONS = [
         limit: {
           type: "integer",
           minimum: 1,
-          maximum: 62,
-          description: "Number of funds to include. Defaults to all covered funds (62).",
+          maximum: FUND_UNIVERSE.length,
+          description: "Number of funds to include. Defaults to all covered funds.",
         },
       },
       additionalProperties: false,
@@ -210,7 +210,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "list_funds",
     description:
-      "List the 62-fund universe with codes, names and categories. Use when the user asks which funds are covered or when a scheme code is needed.",
+      "List the full covered-fund universe with codes, names and categories. Use when the user asks which funds are covered or when a scheme code is needed.",
     parameters: {
       type: "object",
       properties: {},

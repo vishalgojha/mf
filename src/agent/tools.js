@@ -424,7 +424,7 @@ export const createToolkit = ({
   // Bulk NAV export for agent clients. A level window and an explicit date
   // window use the same shape, so Instinct can request either market-relative
   // or calendar-relative data without doing client-side arithmetic.
-  const fundData = ({ from = null, to = null, fromDate = null, toDate = null, limit = 62 } = {}) => {
+  const fundData = ({ from = null, to = null, fromDate = null, toDate = null, limit = null } = {}) => {
     let startTime;
     let endTime;
     let window = null;
@@ -449,7 +449,7 @@ export const createToolkit = ({
       }
     }
 
-    const selected = universe.slice(0, limit);
+    const selected = Number.isInteger(limit) ? universe.slice(0, limit) : universe;
     const returned = selected.map((fund) => {
       const { navs, schemeName } = getFund(fund.code);
       const series = navs.filter(([time]) => time >= startTime && time <= endTime);

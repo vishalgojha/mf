@@ -142,13 +142,13 @@ one final tool-free call and returns `truncated: true` with a note.
 | Tool | Arguments | Returns |
 |---|---|---|
 | `resolve_window` | `from`, `to` | Window dates, Nifty closes, Nifty return, session count. |
-| `rank_funds` | `from`, `to`, `category?`, `limit?` | 62-fund ranking with return, alpha, NAV dates, stale flags, excluded funds. |
+| `rank_funds` | `from`, `to`, `category?`, `limit?` | Ranking across the covered funds with return, alpha, NAV dates, stale flags, excluded funds. |
 | `category_stats` | `from`, `to` | Per-category average/median return, average alpha, breadth, best/worst. |
 | `analog_windows` | `movePct?`, `tolerancePct?`, `maxDays?`, `direction?`, `category?`, `minObservations?`, `limit?` | Every similar historical move, plus funds ranked by hit rate and median alpha. |
 | `fund_detail` | `code`, `from?`, `to?` | One fund's NAV series and return. Defaults to the last 365 days. |
-| `fund_data` | `from?`, `to?`, `fromDate?`, `toDate?`, `limit?` | Bulk NAV series for up to all 62 covered funds, using either a Nifty level window or explicit dates. |
+| `fund_data` | `from?`, `to?`, `fromDate?`, `toDate?`, `limit?` | Bulk NAV series for all covered funds, using either a Nifty level window or explicit dates. |
 | `market_overview` | `lookbackDays?` | Latest Nifty close, 1w/1m/3m/6m/1y returns, range and drawdown. |
-| `list_funds` | none | The 62-fund universe with codes, names and categories. |
+| `list_funds` | none | The covered-fund universe with codes, names and categories. |
 
 `GET /api/instinct/tools` returns the authoritative JSON Schema for each tool.
 
@@ -157,7 +157,7 @@ one final tool-free call and returns `truncated: true` with a note.
 ## Data contract
 
 - **Nifty 50**: bundled daily closes from `public/data/nifty50.json`.
-- **Funds**: 62 curated Direct-Growth schemes from `public/data/funds.json`
+- **Funds**: 161 Direct-Growth schemes from `public/data/funds.json`
   (MFAPI.in), merged with the Nifty coverage window.
 - A window starts at the most recent Nifty close **at or below** `from` and ends
   at the first later close **at or above** `to`.

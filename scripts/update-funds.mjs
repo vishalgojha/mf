@@ -1,6 +1,6 @@
 // Refresh public/data/funds.json with daily NAV history for the comparison
 // universe. The browser then loads one small file instead of calling MFAPI.in
-// 62 times on every visit.
+// once instead of one request per fund on every visit.
 //
 //   npm run update:funds              # default concurrency
 //   npm run update:funds -- 4         # ...with 4 parallel downloads

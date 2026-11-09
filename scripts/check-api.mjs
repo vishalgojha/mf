@@ -112,7 +112,7 @@ try {
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.status, "ok");
-    assert.equal(body.data.funds.count, 62);
+    assert.equal(body.data.funds.count, 161);
     assert.equal(body.data.nifty.rows > 500, true);
     assert.equal(body.providers.mode, "agent");
     assert.ok(body.providers.providers.some((provider) => provider.name === "mock"));
@@ -254,7 +254,7 @@ try {
     const response = await fetch(`${base}/data/funds.json`);
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(Object.keys(body.funds).length, 62);
+    assert.equal(Object.keys(body.funds).length, 161);
     assert.equal(response.headers.get("cache-control"), "public, max-age=3600");
   });
 
