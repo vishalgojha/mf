@@ -301,9 +301,6 @@ const Chart = () => {
     slider.on('onchange', (val) => {
       sliderStartDateRef.current.textContent = formatDate(val[0]);
       sliderEndDateRef.current.textContent = formatDate(val[1]);
-    });
-
-    slider.on('end', (val) => {
       const filteredData = data.filter(d => d.date >= val[0] && d.date <= val[1]);
 
       if (filteredData.length < 2) {
@@ -311,7 +308,7 @@ const Chart = () => {
         return drawChart(parentWidth, parentHeight, fundData);
       };
 
-      xScale.domain([filteredData[0].date.getTime(), filteredData[filteredData.length - 1].date.getTime()]);
+      xScale.domain([filteredData[0].date, filteredData[filteredData.length - 1].date]);
       yScale.domain([d3.min(filteredData, d => d.nav), d3.max(filteredData, d => d.nav)]);
 
       setNavChange(filteredData.length > 0 ? (
