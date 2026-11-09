@@ -4,6 +4,8 @@ import { ThemeProvider, Container, CssBaseline, Box, Typography, Link, Button, P
 import GitHubIcon from '@mui/icons-material/GitHub';
 import KeyIcon from '@mui/icons-material/Key';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useSelector } from 'react-redux';
 import { SnackbarProvider } from 'notistack';
 import { getTheme } from '../features/theme/themeSlice';
@@ -15,6 +17,8 @@ const Layout = () => {
   const [oneTimeKey, setOneTimeKey] = useState(null);
   const [keyVisible, setKeyVisible] = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
+  const [baseUrlCopied, setBaseUrlCopied] = useState(false);
+  const instinctBaseUrl = 'https://mf.vishalojha.me/api/instinct';
   const [keyLoading, setKeyLoading] = useState(false);
   const [keyError, setKeyError] = useState('');
 
@@ -42,6 +46,11 @@ const Layout = () => {
     }
   };
 
+  const copyBaseUrl = async () => {
+    await navigator.clipboard.writeText(instinctBaseUrl);
+    setBaseUrlCopied(true);
+  };
+
   return (
     <ThemeProvider theme={theme === "light" ? lightTheme : darkTheme}>
       <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} autoHideDuration={5000} preventDuplicate />
@@ -65,11 +74,32 @@ const Layout = () => {
                 <Link href="https://www.mfapi.in/" target="_blank" rel="noopener"> MFAPI.in</Link> free API;
               Nifty 50 closes are bundled from NSE data. Built with React, D3, and Material UI.
             </Typography>
-            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+            <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 }, mb: 3, borderTop: 4, borderTopColor: '#ff834f' }}>
               <Stack spacing={1}>
-                <Typography variant="subtitle1" fontWeight="bold">Try the Instinct API</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AutoAwesomeIcon sx={{ color: '#ff834f' }} />
+                  <Typography variant="h5" fontWeight="bold">Instinct AI</Typography>
+                </Box>
+                <Typography variant="body1" color="text.secondary">
+                  Give Instinct direct access to LevelLens market data. It can search the covered funds, resolve Nifty level windows, compare returns, and retrieve NAV data for all available funds.
+                </Typography>
+                <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'action.hover' }}>
+                  <Typography variant="subtitle2" fontWeight="bold">API base URL</Typography>
+                  <Typography component="code" variant="body2" sx={{ wordBreak: 'break-all' }}>{instinctBaseUrl}</Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                    <Button size="small" startIcon={<ContentCopyIcon />} onClick={copyBaseUrl}>
+                      {baseUrlCopied ? 'Copied' : 'Copy URL'}
+                    </Button>
+                    <Button size="small" component="a" href={`${instinctBaseUrl}/openapi.json`} target="_blank" rel="noopener" endIcon={<OpenInNewIcon />}>
+                      Open API schema
+                    </Button>
+                  </Box>
+                </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Get a free bearer key for one hosted-agent request. It expires after 10 minutes and is never stored in your browser. Copy it directly into Instinct Vault.
+                  Direct fund and Nifty tools are public and read-only, so most Instinct integrations do not need a bearer key. Use the one-time key below only for the hosted natural-language <code>/ask</code> endpoint.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Need hosted answers? Get a free bearer key for one request. It expires after 10 minutes and is never stored in your browser. Copy it directly into Instinct Vault.
                 </Typography>
                 <Box>
                   <Button
