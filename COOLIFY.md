@@ -4,8 +4,7 @@ This app is a static React SPA, so it ships as a small **nginx container**. Ther
 no database, no persistent volume, and no server-side Node.js at runtime.
 
 > **Current target:** repo `vishalgojha/sdagent`, branch `main`, domain
-> `https://sd.vishalojha.me`. The previous Agent V code is preserved on the
-> `agent-legacy` branch if it is ever needed again.
+> `https://sd.vishalojha.me`.
 
 The repo includes:
 
@@ -47,9 +46,8 @@ git push origin main
 Coolify builds the image, starts the container, waits for `/healthz`, and puts it
 behind its Traefik proxy.
 
-> Replacing the old Agent V application? Remove its `/data` persistent storage and
-> change the exposed port from `3000` to `80`; otherwise Coolify keeps the old
-> container settings.
+> Reusing an existing application? Remove any persistent storage and set the
+> exposed port to `80`; otherwise Coolify keeps the old container settings.
 
 ## 3. DNS
 
