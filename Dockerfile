@@ -28,6 +28,9 @@ COPY --chown=node:node src/data ./src/data
 COPY --chown=node:node src/utils ./src/utils
 COPY --chown=node:node package.json ./
 
+# Coolify's HTTP healthcheck needs curl or wget inside the image.
+RUN apk add --no-cache curl
+
 USER node
 
 EXPOSE 8080
