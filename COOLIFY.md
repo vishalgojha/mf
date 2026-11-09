@@ -3,6 +3,10 @@
 This app is a static React SPA, so it ships as a small **nginx container**. There is
 no database, no persistent volume, and no server-side Node.js at runtime.
 
+> **Current target:** repo `vishalgojha/sdagent`, branch `main`, domain
+> `https://sd.vishalojha.me`. The previous Agent V code is preserved on the
+> `agent-legacy` branch if it is ever needed again.
+
 The repo includes:
 
 | File | Purpose |
@@ -13,19 +17,19 @@ The repo includes:
 
 ## 1. Put the code on a Git repo Coolify can reach
 
-Coolify deploys from Git. Push your fork (with these changes committed) to GitHub,
-GitLab, Gitea, or any Git server Coolify can access.
+Coolify deploys from Git. This repo is already pushed to
+`git@github.com:vishalgojha/sdagent.git` on `main`.
 
 ```bash
 git add -A
-git commit -m "Add Nifty range performance + container deployment"
+git commit -m "Update app"
 git push origin main
 ```
 
 ## 2. Create the application in Coolify
 
 1. Open Coolify → your **Project** → **+ New Resource** → **Application**.
-2. Choose **Git-based** deployment and select the repository/branch.
+2. **Repository:** `vishalgojha/sdagent`, **Branch:** `main`.
 3. **Build Pack:** `Dockerfile`
 4. **Base Directory:** `/`
 5. **Dockerfile Location:** `/Dockerfile`
@@ -35,17 +39,23 @@ git push origin main
    - Port: `80`
    - Method: `GET`
    - Expected status: `200`
-8. **Domain:** enter e.g. `https://funds.example.com`, then enable **HTTPS**
-   (Coolify provisions a Let's Encrypt certificate).
-9. Click **Deploy**.
+8. **Domain:** `https://sd.vishalojha.me`, with **HTTPS** enabled
+   (Coolify provisions/renews the Let's Encrypt certificate).
+9. **Persistent Storage:** none — this app is stateless.
+10. Click **Deploy**.
 
 Coolify builds the image, starts the container, waits for `/healthz`, and puts it
 behind its Traefik proxy.
 
+> Replacing the old Agent V application? Remove its `/data` persistent storage and
+> change the exposed port from `3000` to `80`; otherwise Coolify keeps the old
+> container settings.
+
 ## 3. DNS
 
-Point the domain's `A` record (and `AAAA` if you use IPv6) at the Hetzner server's
-public IP. Keep Coolify's own ports 80/443 open in the Hetzner firewall.
+`sd.vishalojha.me` already has an `A` record pointing at the Hetzner server
+(`62.238.18.85`), so no DNS change is needed. Keep Coolify's ports 80/443 open in
+the Hetzner firewall.
 
 ## 4. Optional: override the MFAPI URL
 
