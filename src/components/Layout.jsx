@@ -13,6 +13,8 @@ import Header from './Header';
 const Layout = () => {
   const theme = useSelector(getTheme);
   const [oneTimeKey, setOneTimeKey] = useState(null);
+  const [keyVisible, setKeyVisible] = useState(false);
+  const [keyCopied, setKeyCopied] = useState(false);
   const [keyLoading, setKeyLoading] = useState(false);
   const [keyError, setKeyError] = useState('');
 
@@ -24,6 +26,8 @@ const Layout = () => {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || 'Could not issue a key.');
       setOneTimeKey(body);
+      setKeyVisible(false);
+      setKeyCopied(false);
     } catch (error) {
       setKeyError(error.message);
     } finally {
@@ -32,7 +36,10 @@ const Layout = () => {
   };
 
   const copyKey = async () => {
-    if (oneTimeKey?.key) await navigator.clipboard.writeText(oneTimeKey.key);
+    if (oneTimeKey?.key) {
+      await navigator.clipboard.writeText(oneTimeKey.key);
+      setKeyCopied(true);
+    }
   };
 
   return (
@@ -62,7 +69,7 @@ const Layout = () => {
               <Stack spacing={1}>
                 <Typography variant="subtitle1" fontWeight="bold">Try the Instinct API</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Get a free bearer key for one hosted-agent request. It expires after 10 minutes and is never stored in your browser.
+                  Get a free bearer key for one hosted-agent request. It expires after 10 minutes and is never stored in your browser. Copy it directly into Instinct Vault.
                 </Typography>
                 <Box>
                   <Button
@@ -76,11 +83,30 @@ const Layout = () => {
                   </Button>
                 </Box>
                 {oneTimeKey && (
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Typography component="code" sx={{ wordBreak: 'break-all' }}>{oneTimeKey.key}</Typography>
-                    <Button size="small" startIcon={<ContentCopyIcon />} onClick={copyKey}>Copy</Button>
-                    <Typography variant="caption" color="text.secondary">Use as <code>Authorization: Bearer {oneTimeKey.key}</code> on <code>/api/instinct/ask</code>.</Typography>
-                  </Box>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Typography component="code" sx={{ letterSpacing: 1 }}>
+                        {keyVisible ? oneTimeKey.key : '••••••••••••••••••••••••••••••••'}
+                      </Typography>
+                      <Button size="small" onClick={() => setKeyVisible((visible) => !visible)}>
+                        {keyVisible ? 'Hide' : 'Reveal'}
+                      </Button>
+                      <Button size="small" startIcon={<ContentCopyIcon />} onClick={copyKey}>
+                        {keyCopied ? 'Copied' : 'Copy key'}
+                      </Button>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      In Instinct Vault, click <strong>+</strong> → <strong>Add login</strong> and use:
+                    </Typography>
+                    <Box component="ul" sx={{ m: 0, pl: 3, color: 'text.secondary' }}>
+                      <li><Typography variant="body2">Name: <em>anything you choose</em></Typography></li>
+                      <li><Typography variant="body2">Password: <em>paste the copied API key</em></Typography></li>
+                      <li><Typography variant="body2">Website: <code>mf.vishalojha.me</code></Typography></li>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Use the key as <code>Authorization: Bearer &lt;key&gt;</code> for <code>/api/instinct/ask</code>. The masked key is not shown again unless you choose Reveal.
+                    </Typography>
+                  </Stack>
                 )}
                 {keyError && <Typography variant="body2" color="error">{keyError}</Typography>}
               </Stack>
