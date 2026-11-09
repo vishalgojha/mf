@@ -4,7 +4,7 @@ This app is a static React SPA, so it ships as a small **nginx container**. Ther
 no database, no persistent volume, and no server-side Node.js at runtime.
 
 > **Current target:** repo `vishalgojha/sdagent`, branch `main`, domain
-> `https://sd.vishalojha.me`.
+> `https://mf.vishalojha.me`.
 
 The repo includes:
 
@@ -38,7 +38,7 @@ git push origin main
    - Port: `80`
    - Method: `GET`
    - Expected status: `200`
-8. **Domain:** `https://sd.vishalojha.me`, with **HTTPS** enabled
+8. **Domain:** `https://mf.vishalojha.me`, with **HTTPS** enabled
    (Coolify provisions/renews the Let's Encrypt certificate).
 9. **Persistent Storage:** none — this app is stateless.
 10. Click **Deploy**.
@@ -51,7 +51,7 @@ behind its Traefik proxy.
 
 ## 3. DNS
 
-`sd.vishalojha.me` already has an `A` record pointing at the Hetzner server
+`mf.vishalojha.me` already has an `A` record pointing at the Hetzner server
 (`62.238.18.85`), so no DNS change is needed. Keep Coolify's ports 80/443 open in
 the Hetzner firewall.
 
