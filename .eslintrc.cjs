@@ -16,6 +16,10 @@ module.exports = {
       files: ['scripts/**/*.mjs'],
       env: { node: true },
     },
+    {
+      files: ['server/**/*.mjs'],
+      env: { node: true, es2022: true },
+    },
   ],
   rules: {
     'react-refresh/only-export-components': [

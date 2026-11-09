@@ -14,15 +14,25 @@ COPY . .
 RUN npm run build
 
 # --- Runtime stage ---------------------------------------------------------
-# Static SPA served by nginx. No Node.js at runtime.
-FROM nginx:1.27-alpine AS runtime
+# One Node process serves the static SPA and the Instinct API. The API needs the
+# deterministic toolkit plus the built snapshots, not the full frontend source.
+FROM node:20-alpine AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /app
+ENV NODE_ENV=production PORT=8080
 
-EXPOSE 80
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --chown=node:node server ./server
+COPY --chown=node:node src/agent ./src/agent
+COPY --chown=node:node src/data ./src/data
+COPY --chown=node:node src/utils ./src/utils
+COPY --chown=node:node package.json ./
+
+USER node
+
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget -qO- http://127.0.0.1/healthz >/dev/null || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server/index.mjs"]

@@ -38,8 +38,14 @@ jobs:
       - name: Verify boundary logic
         run: npm run check:returns
 
+      - name: Verify tools and agent loop
+        run: npm run check:tools && npm run check:agent && npm run check:provider
+
       - name: Verify the app still builds
         run: npm run build
+
+      - name: Verify the API and static server
+        run: npm run check:api
 
       - name: Commit refreshed snapshots
         run: |

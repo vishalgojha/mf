@@ -4,6 +4,8 @@ LevelLens is a free, open-source way to look at Indian mutual funds. Search a fu
 
 The range tab answers a specific question: *when the Nifty moved from level A to level B, who beat it?* Pick `22,600 → 25,000` and the app finds the most recent window where the index travelled between those closes, then ranks funds over exactly those dates with returns, alpha vs Nifty, category colours, and a fund-by-fund table.
 
+The same calculations are exposed as the **Instinct API** for agent use. Tools are deterministic, so a model can choose them and narrate the result without inventing numbers. See [INSTINCT.md](INSTINCT.md).
+
 ![Nifty range performance](demo/nifty-range-performance.jpeg)
 ## Demo
 ![Usage demo](demo/india-mutual-fund.gif)
@@ -20,6 +22,7 @@ The range tab answers a specific question: *when the Nifty moved from level A to
 4. Download historical NAV data in CSV format.
 5. Nifty range performance: compare fund returns across a Nifty 50 level move (e.g. 22,600 → 25,000), with a highlighted Nifty chart, ranked return bars, and a fund-by-fund table.
 6. Bundled data snapshots: the range tab loads one `funds.json` file instead of calling MFAPI.in 62 times per visit, and flags funds whose NAV is missing at a window boundary.
+7. Instinct API: deterministic tools plus an optional tool-calling agent using free NVIDIA NIM or OpenRouter keys. Instinct AI can call the tools directly and pay for its own inference.
 
 ## Want to run it locally?
 1. Clone the repository.
@@ -29,6 +32,17 @@ The range tab answers a specific question: *when the Nifty moved from level A to
    VITE_MFAPI_URL=https://api.mfapi.in/mf/
    ```
 4. Run `npm run dev` to start the development server.
+
+To run the Instinct API locally, use two terminals:
+
+```
+npm run api    # Node server on http://localhost:8080
+npm run dev    # Vite proxies /api and /healthz to :8080
+```
+
+Provider keys are optional. Without them the tool endpoints still work; `/ask`
+returns `503` until you set `NVIDIA_API_KEY` or `OPENROUTER_API_KEY`. See
+[INSTINCT.md](INSTINCT.md) for the full API reference.
 
 ### Nifty 50 data
 The Nifty 50 daily closes used by the range-performance tab are bundled in `public/data/nifty50.json`, so the app works out of the box without any API key or CORS proxy. To refresh the snapshot:
@@ -52,9 +66,17 @@ The script keeps only the period covered by the Nifty snapshot (plus a buffer), 
 
 ### Checks
 ```
-npm run check:returns
+npm run check:returns          # boundary logic (late launches, stale NAVs)
+npm run check:tools            # deterministic tool layer against the snapshot
+npm run check:agent            # agent loop with a scripted provider
+npm run check:provider         # OpenAI-compatible transport + fallback
+npm run build && npm run check:api   # HTTP API + static server end to end
 ```
-Covers full coverage, a fund launched after the window start (must be excluded, not measured from its first NAV), a stale end NAV, and empty history.
+
+`check:returns` covers full coverage, a fund launched after the window start
+(must be excluded, not measured from its first NAV), a stale end NAV, and empty
+history. `check:api` starts the real server with a mock provider, so no model key
+is needed.
 
 ### PDF report
 Generate a standalone performance report for a level range:
@@ -67,16 +89,24 @@ python3 scripts/build-report.py --from 22600 --to 25000 --out reports/custom.pdf
 The PDF is rendered with headless Chrome and written to `reports/nifty-fund-performance-22600-25000.pdf`.
 
 ## Deploying
-The app is a static SPA with no backend. It includes a multi-stage `Dockerfile` and an `nginx.conf` (SPA fallback, gzip, asset caching, `/healthz`), so it runs on any Docker host.
+The app now runs as one Node process: it serves the built SPA and the Instinct API
+on port `8080`. The multi-stage `Dockerfile` builds the frontend, then copies the
+`server/` code and the deterministic toolkit into a small runtime image. There is
+still no database and no persistent volume.
 
-For Hetzner with Coolify, follow [COOLIFY.md](COOLIFY.md). The app is deployed from `vishalgojha/mf` (`main`) at `https://mf.vishalojha.me`.
+For Hetzner with Coolify, follow [COOLIFY.md](COOLIFY.md). The app is deployed from
+`vishalgojha/mf` (`main`) at `https://mf.vishalojha.me`.
 
 Quick local container test:
 
 ```
 docker build -t levellens .
-docker run --rm -p 8080:80 levellens
+docker run --rm -p 8080:8080 levellens
+# open http://localhost:8080
 ```
+
+The Instinct endpoints are under `/api/instinct`. Provider keys are runtime
+environment variables, never build args or committed files.
 
 ## Site link
 ## https://mf.vishalojha.me/
