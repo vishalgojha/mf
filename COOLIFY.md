@@ -11,8 +11,10 @@ The repo includes:
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Multi-stage build: `npm ci && npm run build`, then a Node runtime on port `8080` |
-| `server/` | Static file server, Instinct API, agent loop, provider fallback |
+| `Dockerfile` | Multi-stage build: `npm ci && npm run build`, then a Node runtime on port `8080` (plus Python 3 + yfinance for `/api/screener`) |
+| `server/` | Static file server, Instinct API, agent loop, provider fallback, stock screener |
+| `server/screener.mjs` | `GET /api/screener` — delayed NSE fundamentals via Yahoo Finance (Python bridge) |
+| `server/screener_fetcher.py` | yfinance helper called by `screener.mjs` |
 | `src/agent/tools.js` | Deterministic calculations shared by the API and the app |
 | `.dockerignore` | Keeps the build context small and excludes `.env` |
 
@@ -98,7 +100,13 @@ INSTINCT_TOOL_RATE_LIMIT=120
 Without a provider key the deterministic tool endpoints still work. `/ask`
 returns `503` with a clear message. See [INSTINCT.md](INSTINCT.md).
 
-## 5. Updating the snapshots
+## 5. Stock screener (`/api/screener`)
+
+The screener endpoint is served from the same container on `/api/screener?symbols=RELIANCE.NS,TCS.NS`. It needs Python 3 + yfinance, which the Dockerfile installs in the runtime stage. No extra Coolify configuration is required — it ships with the app.
+
+Frontend route: `/screener` (linked from the header).
+
+## 6. Updating the snapshots
 
 `public/data/nifty50.json` and `public/data/funds.json` are baked into the image.
 Refresh Nifty first (the fund snapshot uses its coverage window), then funds:

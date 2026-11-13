@@ -16,6 +16,8 @@ RUN npm run build
 # --- Runtime stage ---------------------------------------------------------
 # One Node process serves the static SPA and the Instinct API. The API needs the
 # deterministic toolkit plus the built snapshots, not the full frontend source.
+# Python 3 + yfinance are required by server/screener_fetcher.py for the
+# /api/screener endpoint (NSE equity fundamentals via Yahoo Finance).
 FROM node:20-alpine AS runtime
 
 WORKDIR /app
@@ -29,7 +31,9 @@ COPY --chown=node:node src/utils ./src/utils
 COPY --chown=node:node package.json ./
 
 # Coolify's HTTP healthcheck needs curl or wget inside the image.
-RUN apk add --no-cache curl
+# Python is needed for the screener data fetcher.
+RUN apk add --no-cache curl python3 py3-pip && \
+    pip3 install --no-cache-dir yfinance
 
 USER node
 
