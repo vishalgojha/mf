@@ -18,6 +18,7 @@ import {
 } from "./providers.mjs";
 import { createStaticHandler } from "./static.mjs";
 import { ToolError, createToolRegistry } from "./tools.mjs";
+import { handleScreener } from "./screener.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.env.PORT || process.env.INSTINCT_PORT || 8080);
@@ -506,6 +507,12 @@ const handleApi = async (req, res, pathname, requestId) => {
       },
       requestId
     );
+    return true;
+  }
+
+  if (pathname === "/api/screener") {
+    if (req.method !== "GET") throw new HttpError(405, "Method not allowed.", "method_not_allowed");
+    await handleScreener(req, res);
     return true;
   }
 
